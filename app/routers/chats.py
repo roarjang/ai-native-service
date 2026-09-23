@@ -4,7 +4,10 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from app.dependencies import (
     ChatServiceDep,
+    ConversationRepoDep,
     ConversationServiceDep,
+    ExecutionRepoDep,
+    MessageRepoDep,
     require_client_id,
 )
 from app.schemas.chat import (
@@ -13,8 +16,12 @@ from app.schemas.chat import (
     ConversationRead,
     ConversationUpdate,
     ConversationWithMessages,
+    ExecutionRead,
     MessageCreate,
+    MessageRead,
 )
+from app.services.errors import ConversationNotFound, LLMUnavailableError
+
 
 logger = logging.getLogger(__name__)
 
@@ -35,12 +42,12 @@ async def send_message(
 ) -> ChatResponse:
     try:
         return await service.send_message(conversation_id, request)
-    except Exception:
+    except ConversationNotFound as exc:
+        raise HTTPException(404, "대화를 찾을 수 없습니다.") from exc
+    except LLMUnavailableError as exc:
         logger.exception("LLM 호출 실패")
-        raise HTTPException(
-            status_code=502,
-            detail="AI 응답을 가져오지 못했습니다.",
-        )
+        raise HTTPException(502, "AI 응답을 가져오지 못했습니다.") from exc
+
 
 @router.post(
     "",
@@ -89,3 +96,24 @@ def delete_conversation(
 ) -> None:
     if not service.delete(conversation_id):
         raise HTTPException(status_code=404, detail="Conversation not found")
+
+@router.get("/{conversation_id}/messages", response_model=list[MessageRead])
+def list_messages(
+    conversation_id: int,
+    conversations: ConversationRepoDep,
+    messages: MessageRepoDep,
+):
+    if conversations.get(conversation_id) is None:
+        raise HTTPException(404, "대화를 찾을 수 없습니다.")
+    return messages.list_by_conversation(conversation_id)
+
+
+@router.get("/{conversation_id}/executions", response_model=list[ExecutionRead])
+def list_executions(
+    conversation_id: int,
+    conversations: ConversationRepoDep,
+    executions: ExecutionRepoDep,
+):
+    if conversations.get(conversation_id) is None:
+        raise HTTPException(404, "대화를 찾을 수 없습니다.")
+    return executions.list_by_conversation(conversation_id)

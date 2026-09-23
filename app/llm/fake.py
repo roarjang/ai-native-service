@@ -4,3 +4,7 @@ class FakeLLMClient:
 
     async def generate(self, prompt: str) -> str:
         return self.reply
+
+class FailingLLMClient:
+    async def generate(self, prompt: str) -> str:
+        raise TimeoutError("LLM 응답 시간 초과")

@@ -1,3 +1,5 @@
+from app.repositories.ai_execution import ExecutionRepository
+
 from typing import Annotated
 from fastapi import Depends, Header, HTTPException
 from app.services.chat_service import ChatService
@@ -13,12 +15,6 @@ from functools import lru_cache
 from app.llm.base import LLMClient
 from app.llm.gemini import GeminiLLMClient
 
-
-def get_chat_service() -> ChatService:
-    return ChatService()
-
-
-ChatServiceDep = Annotated[ChatService, Depends(get_chat_service)]
 
 def require_client_id(
     x_client_id: Annotated[
@@ -68,9 +64,22 @@ def get_llm_client() -> LLMClient:
 
 LLMDep = Annotated[LLMClient, Depends(get_llm_client)]
 
+def get_execution_repository(session: SessionDep) -> ExecutionRepository:
+    return ExecutionRepository(session)
 
-def get_chat_service(llm: LLMDep) -> ChatService:
-    return ChatService(llm)
+
+ExecutionRepoDep = Annotated[ExecutionRepository, Depends(get_execution_repository)]
+
+
+def get_chat_service(session: SessionDep, llm: LLMDep) -> ChatService:
+    return ChatService(
+        session=session,
+        conversations=ConversationRepository(session),
+        messages=MessageRepository(session),
+        executions=ExecutionRepository(session),
+        llm=llm,
+        model_name=os.environ["LLM_MODEL"],
+    )
 
 
 ChatServiceDep = Annotated[ChatService, Depends(get_chat_service)]

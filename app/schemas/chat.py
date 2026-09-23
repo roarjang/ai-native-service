@@ -40,3 +40,12 @@ class ConversationWithMessages(ConversationRead):
 
 class ConversationUpdate(BaseModel):
     title: str = Field(min_length=1, max_length=100)
+
+class ExecutionRead(BaseModel):
+    id: int
+    provider: str
+    model_name: str
+    status: str
+    latency_ms: int | None
+    error_message: str | None
+    created_at: datetime
