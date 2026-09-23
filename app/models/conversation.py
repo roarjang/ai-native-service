@@ -18,8 +18,10 @@ class Conversation(SQLModel, table=True):
     created_at: datetime = Field(default_factory=utc_now)
 
     messages: list["Message"] = Relationship(
-        back_populates="conversation"
+        back_populates="conversation",
+        sa_relationship_kwargs={"cascade": "all, delete-orphan"},
     )
     executions: list["AIExecution"] = Relationship(
-        back_populates="conversation"
+        back_populates="conversation",
+        sa_relationship_kwargs={"cascade": "all, delete-orphan"},
     )
