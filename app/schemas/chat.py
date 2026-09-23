@@ -1,5 +1,6 @@
 from typing import Literal
 from pydantic import BaseModel, Field
+from datetime import datetime
 
 
 class ConversationCreate(BaseModel):
@@ -26,3 +27,16 @@ class ChatResponse(BaseModel):
     conversation_id: int
     user_message: MessageRead
     assistant_message: MessageRead
+
+class ConversationRead(BaseModel):
+    id: int
+    title: str
+    created_at: datetime
+
+
+class ConversationWithMessages(ConversationRead):
+    messages: list[MessageRead]
+
+
+class ConversationUpdate(BaseModel):
+    title: str = Field(min_length=1, max_length=100)

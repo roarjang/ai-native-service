@@ -1,7 +1,10 @@
 import os
+from collections.abc import Generator
+from typing import Annotated
 
 from dotenv import load_dotenv
-from sqlmodel import SQLModel, create_engine
+from fastapi import Depends
+from sqlmodel import Session, SQLModel, create_engine
 
 load_dotenv()
 
@@ -15,3 +18,11 @@ engine = create_engine(
 
 def create_db_and_tables() -> None:
     SQLModel.metadata.create_all(engine)
+
+
+def get_session() -> Generator[Session, None, None]:
+    with Session(engine) as session:
+        yield session
+
+
+SessionDep = Annotated[Session, Depends(get_session)]
