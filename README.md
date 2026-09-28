@@ -56,9 +56,10 @@ flowchart TB
 
 | 사용자 행동 | Method·URL | 구현 상태 | Success | Error |
 |---|---|---|---|---|
-| 새 대화 시작 | `POST /api/conversations` | 예정 | `201` | `422` 제목 누락·빈 제목·100자 초과 |
-| 대화 목록 확인 | `GET /api/conversations` | 예정 | `200` | `500` 서버 조회 실패 |
-| 질문 전송 | `POST /api/conversations/{id}/messages` | 구현됨 | `200` | `400` 잘못된 `X-Client-Id` · `422` 헤더 누락·입력 오류 · `502` Gemini 실패(예정) |
+| 새 대화 시작 | `POST /api/conversations` | 구현됨 | `201` | `422` 제목 누락·빈 제목·100자 초과 |
+| 대화 목록 확인 | `GET /api/conversations` | 구현됨 | `200` | `500` 서버 조회 실패 |
+| 질문 전송 | `POST /api/conversations/{id}/messages` | 구현됨 | `200` | `404` 대화 없음 · `502` AI 호출 실패 |
+| 답변 스트리밍 | `POST /api/conversations/{id}/messages/stream` | 구현됨 | `200` NDJSON | `404` 대화 없음 · 스트림의 `error` 이벤트 |
 
 ```json
 { "content": "FastAPI의 장점을 설명해 줘" }
@@ -81,4 +82,6 @@ uv run fastapi dev app/main.py
 # 테스트 실행
 uv run pytest
 ```
+
+React 화면의 실행·빌드 방법은 [frontend/README.md](frontend/README.md)를 참고하세요. 프런트엔드를 빌드하면 FastAPI가 `frontend/dist/`를 `/`에서 제공합니다.
 
