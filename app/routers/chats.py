@@ -1,6 +1,7 @@
 import logging
 
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import StreamingResponse
 
 from app.dependencies import (
     ChatServiceDep,
@@ -47,6 +48,20 @@ async def send_message(
     except LLMUnavailableError as exc:
         logger.exception("LLM 호출 실패")
         raise HTTPException(502, "AI 응답을 가져오지 못했습니다.") from exc
+
+
+@router.post("/{conversation_id}/messages/stream")
+async def stream_message(
+    conversation_id: int, request: MessageCreate, service: ChatServiceDep
+) -> StreamingResponse:
+    try:
+        execution_id = service.start_stream(conversation_id, request.content)
+    except ConversationNotFound as exc:
+        raise HTTPException(404, "대화를 찾을 수 없습니다.") from exc
+    return StreamingResponse(
+        service.stream_reply(conversation_id, request.content, execution_id),
+        media_type="application/x-ndjson",
+    )
 
 
 @router.post(

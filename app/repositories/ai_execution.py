@@ -44,3 +44,6 @@ class ExecutionRepository:
     def latest(self, conversation_id: int) -> AIExecution | None:
         rows = self.list_by_conversation(conversation_id)
         return rows[0] if rows else None
+
+    def get(self, execution_id: int) -> AIExecution | None:
+        return self.session.get(AIExecution, execution_id)

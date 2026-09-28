@@ -1,3 +1,6 @@
+import json
+import logging
+from collections.abc import AsyncIterator
 from time import perf_counter
 
 from sqlmodel import Session
@@ -8,6 +11,12 @@ from app.repositories.conversation import ConversationRepository
 from app.repositories.message import MessageRepository
 from app.schemas.chat import ChatResponse, MessageCreate, MessageRead
 from app.services.errors import ConversationNotFound, LLMUnavailableError
+
+logger = logging.getLogger(__name__)
+
+
+def stream_event(data: dict[str, str | int]) -> str:
+    return json.dumps(data, ensure_ascii=False) + "\n"
 
 
 class ChatService:
@@ -79,3 +88,47 @@ class ChatService:
                 content=assistant_message.content,
             ),
         )
+
+    def start_stream(self, conversation_id: int, content: str) -> int:
+        """Persist the accepted question before sending any response bytes."""
+        try:
+            if self.conversations.get(conversation_id) is None:
+                raise ConversationNotFound(conversation_id)
+            self.messages.create(conversation_id, "user", content)
+            execution = self.executions.create_running(conversation_id, self.model_name)
+            execution_id = execution.id
+            self.session.commit()
+            return execution_id
+        except Exception:
+            self.session.rollback()
+            raise
+
+    async def stream_reply(
+        self, conversation_id: int, content: str, execution_id: int
+    ) -> AsyncIterator[str]:
+        """Send NDJSON tokens and persist the final answer or failure."""
+        answer_parts: list[str] = []
+        started = perf_counter()
+        try:
+            async for chunk in self.llm.stream(content):
+                if chunk:
+                    answer_parts.append(chunk)
+                    yield stream_event({"type": "token", "content": chunk})
+
+            answer = "".join(answer_parts)
+            execution = self.executions.get(execution_id)
+            assistant = self.messages.create(conversation_id, "assistant", answer)
+            self.executions.complete(execution, int((perf_counter() - started) * 1000))
+            self.session.commit()
+            yield stream_event({"type": "done", "message_id": assistant.id})
+        except Exception as exc:
+            logger.exception("LLM 스트리밍 실패")
+            self.session.rollback()
+            execution = self.executions.get(execution_id)
+            self.executions.fail(
+                execution,
+                int((perf_counter() - started) * 1000),
+                type(exc).__name__,
+            )
+            self.session.commit()
+            yield stream_event({"type": "error", "code": "LLM_UNAVAILABLE"})
