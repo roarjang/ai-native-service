@@ -23,6 +23,7 @@ dependencies = [
     { name = "fastapi", extra = ["standard"] },
     { name = "langchain-litellm" },
     { name = "psycopg", extra = ["binary"] },
+    { name = "pydantic-settings" },
     { name = "python-dotenv" },
     { name = "sqlmodel" },
 ]
@@ -38,6 +39,7 @@ requires-dist = [
     { name = "fastapi", extras = ["standard"], specifier = ">=0.141.1" },
     { name = "langchain-litellm", specifier = ">=0.8.0" },
     { name = "psycopg", extras = ["binary"], specifier = ">=3.3.6" },
+    { name = "pydantic-settings", specifier = ">=2.15.0" },
     { name = "python-dotenv", specifier = ">=1.2.3" },
     { name = "sqlmodel", specifier = ">=0.0.46" },
 ]

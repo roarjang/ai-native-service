@@ -8,12 +8,13 @@ from app.repositories.conversation import ConversationRepository
 from app.repositories.message import MessageRepository
 from app.services.conversation_service import ConversationService
 
-import os
 from functools import lru_cache
 
 
 from app.llm.base import LLMClient
 from app.llm.gemini import GeminiLLMClient
+from app.llm.fake import FakeLLMClient
+from app.settings import settings
 
 
 def require_client_id(
@@ -56,9 +57,12 @@ ConversationServiceDep = Annotated[
     ConversationService, Depends(get_conversation_service)
 ]
 
+
 @lru_cache
 def get_llm_client() -> LLMClient:
-    model_name = os.environ["LLM_MODEL"]
+    model_name = settings.llm_model
+    if model_name.startswith("fake/"):
+        return FakeLLMClient()
     return GeminiLLMClient(model_name)
 
 
@@ -78,7 +82,7 @@ def get_chat_service(session: SessionDep, llm: LLMDep) -> ChatService:
         messages=MessageRepository(session),
         executions=ExecutionRepository(session),
         llm=llm,
-        model_name=os.environ["LLM_MODEL"],
+        model_name=settings.llm_model,
     )
 
 

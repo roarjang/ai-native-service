@@ -1,17 +1,14 @@
-import os
 from collections.abc import Generator
 from typing import Annotated
 
-from dotenv import load_dotenv
 from fastapi import Depends
 from sqlmodel import Session, SQLModel, create_engine
 
-load_dotenv()
+from app.settings import settings
 
-DATABASE_URL = os.environ["DATABASE_URL"]
 engine = create_engine(
-    DATABASE_URL,
-    echo=True,
+    settings.database_url,
+    echo=settings.app_env != "production",
     pool_pre_ping=True,
 )
 
