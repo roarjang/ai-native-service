@@ -83,5 +83,16 @@ uv run fastapi dev app/main.py
 uv run pytest
 ```
 
+## 환경 변수
+| 변수 | 필수 | 비밀 | 설명 |
+|---|---|---|---|
+| `APP_ENV` | 선택 | 아니오 | `development` / `production` |
+| `DATABASE_URL` | 필수 | 예 | `postgresql+psycopg://app:<비밀번호>@db:5432/ai_native` |
+| `GEMINI_API_KEY` | 필수 | 예 | Google AI Studio 키 |
+| `TEST_DATABASE_URL` | 테스트 시 필수 | 예 | 이름이 `_test`로 끝나는 별도 DB |
+| `LLM_MODEL` | 필수 | 아니오 | `gemini/gemini-3.7-flash` |
+| `POSTGRES_DB` · `POSTGRES_USER` · `POSTGRES_PASSWORD` | 필수 | 비밀번호만 예 | db 컨테이너 초기화 |
+| `JWT_SECRET_KEY` | auth 브랜치만 | 예 | 실습 6 |
+
 React 화면의 실행·빌드 방법은 [frontend/README.md](frontend/README.md)를 참고하세요. 프런트엔드를 빌드하면 FastAPI가 `frontend/dist/`를 `/`에서 제공합니다.
 
