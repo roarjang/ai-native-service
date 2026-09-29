@@ -1,8 +1,22 @@
 import type { Message, StreamEvent } from "../types/chat";
-import { ApiError, CLIENT_ID, readError, requestJson } from "./client";
+import { ApiError, CLIENT_ID, readError, authHeaders, requestJson } from "./client";
+
+export type ChatResponse = {
+  conversation_id: number;
+  user_message: Message;
+  assistant_message: Message;
+};
 
 export function listMessages(conversationId: number) {
   return requestJson<Message[]>(`/api/conversations/${conversationId}/messages`);
+}
+
+export function sendMessage(conversationId: number, content: string) {
+  return requestJson<ChatResponse>(`/api/conversations/${conversationId}/messages`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...authHeaders() },
+    body: JSON.stringify({ content }),
+  });
 }
 
 export class ReplyFailedError extends Error {

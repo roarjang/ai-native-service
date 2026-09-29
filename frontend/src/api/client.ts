@@ -39,3 +39,13 @@ export async function requestVoid(path: string, init?: RequestInit): Promise<voi
     throw await readError(response);
   }
 }
+
+let accessToken: string | null = null;
+
+export function setAccessToken(token: string | null): void {
+  accessToken = token;
+}
+
+export function authHeaders(): Record<string, string> {
+  return accessToken ? { Authorization: `Bearer ${accessToken}` } : {};
+}
