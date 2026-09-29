@@ -5,7 +5,7 @@ from pathlib import Path
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.routers import chats
+from app.routers import auth, chats
 from app.settings import settings
 
 logger = logging.getLogger(__name__)
@@ -30,6 +30,7 @@ app.add_middleware(
 )
 
 app.include_router(chats.router)
+app.include_router(auth.router)
 
 
 @app.get("/health", include_in_schema=False)

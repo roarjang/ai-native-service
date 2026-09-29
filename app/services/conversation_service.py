@@ -16,15 +16,18 @@ class ConversationService:
         self.conversations = conversations
         self.messages = messages
 
-    def create(self, title: str) -> Conversation:
+    def create(self, title: str, user_id: int | None = None) -> Conversation:
         try:
-            conversation = self.conversations.create(title)
+            conversation = self.conversations.create(title, user_id)
             self.session.commit()
             self.session.refresh(conversation)
             return conversation
         except Exception:
             self.session.rollback()
             raise
+
+    def list_by_user(self, user_id: int) -> list[Conversation]:
+        return self.conversations.list_by_user(user_id)
 
     def list(self) -> list[Conversation]:
         return self.conversations.list_with_messages()
@@ -64,4 +67,3 @@ class ConversationService:
         except Exception:
             self.session.rollback()
             raise
-

@@ -22,6 +22,8 @@ from app.schemas.chat import (
     MessageRead,
 )
 from app.services.errors import ConversationNotFound, LLMUnavailableError
+from app.auth import get_current_user
+from app.models.user import User
 
 
 logger = logging.getLogger(__name__)
@@ -71,9 +73,11 @@ async def stream_message(
     summary="대화 생성",
 )
 def create_conversation(
-    request: ConversationCreate, service: ConversationServiceDep
+    request: ConversationCreate,
+    service: ConversationServiceDep,
+    user: User = Depends(get_current_user),
 ) -> ConversationRead:
-    return service.create(request.title)
+    return service.create(request.title, user.id)
 
 
 @router.get(
@@ -81,8 +85,11 @@ def create_conversation(
     response_model=list[ConversationWithMessages],
     summary="대화 목록 조회",
 )
-def list_conversations(service: ConversationServiceDep) -> list[ConversationWithMessages]:
-    return service.list()
+def list_conversations(
+    service: ConversationServiceDep,
+    user: User = Depends(get_current_user),
+) -> list[ConversationWithMessages]:
+    return service.list_by_user(user.id)
 
 @router.patch(
     "/{conversation_id}",
@@ -112,13 +119,16 @@ def delete_conversation(
     if not service.delete(conversation_id):
         raise HTTPException(status_code=404, detail="Conversation not found")
 
+
 @router.get("/{conversation_id}/messages", response_model=list[MessageRead])
 def list_messages(
     conversation_id: int,
     conversations: ConversationRepoDep,
     messages: MessageRepoDep,
+    user: User = Depends(get_current_user),
 ):
-    if conversations.get(conversation_id) is None:
+    conversation = conversations.get(conversation_id)
+    if conversation is None or conversation.user_id != user.id:
         raise HTTPException(404, "대화를 찾을 수 없습니다.")
     return messages.list_by_conversation(conversation_id)
 
