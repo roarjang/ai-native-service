@@ -25,3 +25,9 @@ class Conversation(SQLModel, table=True):
         back_populates="conversation",
         sa_relationship_kwargs={"cascade": "all, delete-orphan"},
     )
+
+    user_id: int | None = Field(
+        default=None,
+        foreign_key="users.id",
+        index=True,
+    )
